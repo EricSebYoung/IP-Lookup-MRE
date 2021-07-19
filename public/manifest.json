@@ -1,0 +1,6 @@
+{
+	"name": "IP Lookup",
+	"author": "Eric Young",
+	"repositoryUrl": "https://github.com/EricSebYoung/IP-Lookup-MRE",
+	"optionalPermissions": ["user-interaction"]
+}
