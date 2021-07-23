@@ -1,21 +1,29 @@
 import * as MRE from '@microsoft/mixed-reality-extension-sdk';
 import { UsersDatabase } from './UsersDatabase';
+import { WorldsTrackingDatabase } from './WorldsTrackingDatabase';
+import { WorldTrackingHandler } from './WorldTrackingHandler';
 
 
 export default class App {
 
 	private _UserDatabase: UsersDatabase;
+	private _WorldTrackingDatabase: WorldsTrackingDatabase;
+	private _WorldTrackingHandler: WorldTrackingHandler;
 	private _assets: MRE.AssetContainer;
 
 	public get assetContainer() { return this._assets; }
 	public get context() { return this._context; }
 	public get UserDatabase() { return this._UserDatabase; }
+	public get WorldTrackingHandler() { return this._WorldTrackingHandler; }
+	public get WorldTrackingDatabase() { return this._WorldTrackingDatabase; }
 	
 	constructor(private _context: MRE.Context) {
 		this._assets = new MRE.AssetContainer(_context);
 
 		//outside classes
 		this._UserDatabase = new UsersDatabase();
+		this._WorldTrackingHandler = new WorldTrackingHandler(this);
+		this._WorldTrackingDatabase = new WorldsTrackingDatabase();
 
 		this._context.onStarted(() => this.started());
 		this._context.onUserJoined(user => this.userJoined(user));
@@ -66,6 +74,7 @@ export default class App {
 		console.log(userName + ' has joined the server');	
 
 		await this.UserDatabase.addUserRecord(user);
+		this.WorldTrackingHandler.startup(user);
 	}
 	
 	/**
@@ -75,6 +84,8 @@ export default class App {
 	private userLeft(user: MRE.User) {
 		const userName = user.name;
 		console.log(userName + ' has left the server');
+
+		this.WorldTrackingHandler.cleanup(user);
 	}
 }
 
