@@ -8,11 +8,11 @@ export class WorldTrackingHandler {
 
 	}
 
-	private updateRecord(name: string, id: string) {
-		if (this.TimeSaveMap.has(name)) {
-			const startTime = this.TimeSaveMap.get(name);
-			this.app.WorldTrackingDatabase.updateWorldRecord(name, id, startTime);
-			this.TimeSaveMap.delete(name);
+	private updateRecord(userId: string, worldId: string) {
+		if (this.TimeSaveMap.has(userId)) {
+			const startTime = this.TimeSaveMap.get(userId);
+			this.app.WorldTrackingDatabase.updateWorldRecord(userId, worldId, startTime);
+			this.TimeSaveMap.delete(userId);
 		}
 	}
 
@@ -28,18 +28,19 @@ export class WorldTrackingHandler {
 		return altSpaceId;
 	}
 
-	private saveTime(name: string) {
+	private saveTime(userId: string) {
 		const currentTime = new Date();
-		this.TimeSaveMap.set(name, currentTime);
+		this.TimeSaveMap.set(userId, currentTime);
 	}
 
 	public startup(user: MRE.User) {
 		//const id = this.getAltSpaceId(user);
-		this.saveTime(user.name);
+		this.saveTime(user.id.toString());
 	}
 
 	public cleanup(user: MRE.User) {
-		const id = this.getAltSpaceId(user);
-		this.updateRecord(user.name, id);
+		const userId = user.id.toString();
+		const worldId = this.getAltSpaceId(user);
+		this.updateRecord(userId, worldId);
 	}
 }

@@ -40,7 +40,7 @@ export class WorldsTrackingDatabase {
 
 	/**
 	 * Creates a location record and updates the JSON
-	 * @param user The string with the User's name
+	 * @param user The string with the User's id
 	 * @param worldId The id of the world
 	 */
 	public addNewWorld(user: string, worldId: string) {

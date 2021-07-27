@@ -15,6 +15,7 @@ type UserDatabase = {
 type UserDescriptor = {
 	details: MRE.UserLike;
 	locationData: LocationData;
+	namesUsed: string[];
 };
 
 export type LocationData = {
@@ -31,7 +32,7 @@ export type LocationData = {
 	metro_code: number;
 }
 
-const UserDatabaseFilename = __dirname + '/../public/users.json';
+const fileName = __dirname + '/../public/users.json';
 
 export class UsersDatabase {
 	/* eslint-disable @typescript-eslint/no-var-requires */
@@ -43,36 +44,44 @@ export class UsersDatabase {
 
 	/**
 	 * Creates a User record and updates the JSON
-	 * @param user The string with the User's name
+	 * @param user The user being added
 	 */
 	public async addUserRecord(user: MRE.User) {
-		if (!this.userExists(user.name)) {
+		const userId: string = user.id.toString();
+		if (!this.userExists(userId)) {
 			const userJSON = user.toJSON();
 			const userLocationData = await GetLocation(user.toJSON().properties["remoteAddress"], user);
+			const nameArray: string[] = [];
+			nameArray.push(user.name);
 			const joinedUser: UserDescriptor = {
 				details: userJSON,
 				locationData: userLocationData,
+				namesUsed: nameArray
 			};
 
 			const joinedUserStr = JSON.stringify(joinedUser);
-			const dataEntry = "\"" + user.name + "\": " + joinedUserStr;
+			const dataEntry = "\"" + userId + "\": " + joinedUserStr;
 
 			const Handler: JsonHandler = new JsonHandler;
 			const jsonRecord = Handler.returnAppendedJSONStr(this.UserDatabase, dataEntry);
 
-			Handler.writeJSONStr(UserDatabaseFilename, jsonRecord);
-			this.UserDatabase[user.name] = joinedUser;
+			Handler.writeJSONStr(fileName, jsonRecord);
+			this.UserDatabase[userId] = joinedUser;
+		}
+		if (!this.UserDatabase[userId].namesUsed.some(name => name === user.name)) {
+			this.UserDatabase[userId].namesUsed.push(user.name);
+			this.saveDatabase();
 		}
 	}
 	/**
 	 * Removes a User record to the program and updates the JSON
-	 * @param User The string with the User's name.
+	 * @param User The user being removed
 	 */
 	public removeUserRecord(user: MRE.User) {
 		const Handler: JsonHandler = new JsonHandler;
 		const jsonRecord = Handler.returnRemovedJSONStr(this.UserDatabase, user.name);
 
-		Handler.writeJSONStr(UserDatabaseFilename, jsonRecord);
+		Handler.writeJSONStr(fileName, jsonRecord);
 		delete this.UserDatabase[user.name]
 	}
 
@@ -85,7 +94,7 @@ export class UsersDatabase {
 			delete this.UserDatabase[Id];
 		}
 
-		Handler.cleanJSON(UserDatabaseFilename);
+		Handler.cleanJSON(fileName);
 		this.UserDatabase = require('../public/users.json');
 	}
 
@@ -99,21 +108,27 @@ export class UsersDatabase {
 
 	/**
 	 * Returns the details of the requested User.
-	 * @param UserName The name of the User
+	 * @param UserId The id of the User
 	 * @returns The details of the User
 	 */
-	public getUserDetails(UserName: string) {
-		return this.UserDatabase[UserName].details;
+	public getUserDetails(UserId: string) {
+		return this.UserDatabase[UserId].details;
 	}
 
-	public userExists(UserName: string) {
+	public userExists(UserId: string) {
 		let exists = false;
-		if (this.UserDatabase[UserName]) {
+		if (this.UserDatabase[UserId]) {
 			exists = true;
 		}
 		return exists;
 	}
 	
+	private saveDatabase() {
+		const Handler: JsonHandler = new JsonHandler;
+
+		Handler.writeJSON(fileName, this.UserDatabase);
+	}
+
 	public startup() {
 		console.log("Database starting up");
 		
